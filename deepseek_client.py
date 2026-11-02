@@ -7,7 +7,6 @@ import httpx
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field
 
-
 load_dotenv(Path(__file__).with_name(".env"))
 
 
@@ -86,9 +85,7 @@ def ask_deepseek(message: str, faqs: list[dict]) -> AIAnswer:
         "stream": False,
     }
 
-    with httpx.Client(
-        timeout=httpx.Timeout(45.0, connect=10.0)
-    ) as client:
+    with httpx.Client(timeout=httpx.Timeout(45.0, connect=10.0)) as client:
         response = client.post(
             "https://api.deepseek.com/chat/completions",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -101,9 +98,7 @@ def ask_deepseek(message: str, faqs: list[dict]) -> AIAnswer:
     if choice.get("finish_reason") != "stop":
         raise ValueError("DeepSeek не завершил ответ корректно")
 
-    result = AIAnswer.model_validate_json(
-        choice["message"]["content"]
-    )
+    result = AIAnswer.model_validate_json(choice["message"]["content"])
 
     allowed_ids = {faq["id"] for faq in faqs}
 

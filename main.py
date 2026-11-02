@@ -1,33 +1,30 @@
 import json
-from enum import IntEnum
-
-from fastapi import Request, Response
-from fastapi.responses import JSONResponse
-from pydantic import ValidationError
-from starlette.concurrency import run_in_threadpool
-
 import logging
 import os
+from enum import IntEnum
 from pathlib import Path
 from typing import Literal
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from psycopg import Error as DatabaseError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.concurrency import run_in_threadpool
 
 from deepseek_client import ask_deepseek
 from faq import FAQS, normalize_question
 from faq_repository import get_all_faqs
 
-
 load_dotenv(Path(__file__).with_name(".env"))
 
 logger = logging.getLogger(__name__)
 
+
 class UTF8JSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8"
+
 
 app = FastAPI(
     title=os.getenv("APP_NAME", "auto-assistant"),
@@ -59,10 +56,7 @@ class ChatResponse(BaseModel):
 def handoff(request: ChatRequest, reason: str) -> ChatResponse:
     return ChatResponse(
         status="handoff",
-        answer=(
-            "Не могу дать проверенный ответ на этот вопрос. "
-            "Хотите обратиться к оператору?"
-        ),
+        answer=("Не могу дать проверенный ответ на этот вопрос. Хотите обратиться к оператору?"),
         offer_operator=True,
         reason=reason,
         session_id=request.session_id,
@@ -154,13 +148,12 @@ def chat(request: ChatRequest):
         answer=result.answer,
         offer_operator=result.status == "handoff",
         reason=(
-            "insufficient_information_or_operator_requested"
-            if result.status == "handoff"
-            else None
+            "insufficient_information_or_operator_requested" if result.status == "handoff" else None
         ),
         source_ids=result.source_ids,
         session_id=request.session_id,
     )
+
 
 class AnswerType(IntEnum):
     AI = 1
@@ -208,19 +201,13 @@ async def process_rpc_call(payload):
 
     request_id = payload.get("id")
 
-    valid_id = (
-        request_id is None
-        or type(request_id) in (str, int, float)
-    )
+    valid_id = request_id is None or type(request_id) in (str, int, float)
 
     if (
         payload.get("jsonrpc") != "2.0"
         or not isinstance(payload.get("method"), str)
         or not valid_id
-        or (
-            "params" in payload
-            and not isinstance(payload["params"], (dict, list))
-        )
+        or ("params" in payload and not isinstance(payload["params"], (dict, list)))
     ):
         return rpc_error(None, -32600, "Invalid Request")
 
@@ -232,9 +219,7 @@ async def process_rpc_call(payload):
     else:
         try:
             # Для метода chat используем именованные параметры.
-            params = RPCChatParams.model_validate(
-                payload.get("params", {})
-            )
+            params = RPCChatParams.model_validate(payload.get("params", {}))
         except ValidationError:
             result = rpc_error(request_id, -32602, "Invalid params")
         else:
@@ -251,7 +236,8 @@ async def process_rpc_call(payload):
                         "type_id": int(get_answer_type(answer)),
                     },
                 }
-            except Exception as error:
+            # JSON-RPC must convert unexpected failures to -32603 without exposing details.
+            except Exception as error:  # noqa: BLE001
                 logger.error(
                     "RPC chat failed: %s",
                     type(error).__name__,
@@ -277,15 +263,11 @@ async def rpc_endpoint(request: Request):
             parse_constant=reject_json_constant,
         )
     except (ValueError, UnicodeDecodeError):
-        return UTF8JSONResponse(
-            rpc_error(None, -32700, "Parse error")
-        )
+        return UTF8JSONResponse(rpc_error(None, -32700, "Parse error"))
 
     if isinstance(payload, list):
         if not payload:
-            return UTF8JSONResponse(
-                rpc_error(None, -32600, "Invalid Request")
-            )
+            return UTF8JSONResponse(rpc_error(None, -32600, "Invalid Request"))
 
         responses = []
 

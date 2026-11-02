@@ -3,9 +3,8 @@ from faq import FAQS
 
 
 def main():
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("""
+    with get_connection() as connection, connection.cursor() as cursor:
+        cursor.execute("""
                 CREATE TABLE IF NOT EXISTS faq (
                     id TEXT PRIMARY KEY,
                     question TEXT NOT NULL,
@@ -13,24 +12,24 @@ def main():
                 );
             """)
 
-            for item in FAQS:
-                cursor.execute(
-                    """
+        for item in FAQS:
+            cursor.execute(
+                """
                     INSERT INTO faq (id, question, answer)
                     VALUES (%s, %s, %s)
                     ON CONFLICT (id) DO UPDATE SET
                         question = EXCLUDED.question,
                         answer = EXCLUDED.answer;
                     """,
-                    (
-                        item["id"],
-                        item["question"],
-                        item["answer"],
-                    ),
-                )
+                (
+                    item["id"],
+                    item["question"],
+                    item["answer"],
+                ),
+            )
 
-            cursor.execute("SELECT COUNT(*) FROM faq;")
-            count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM faq;")
+        count = cursor.fetchone()[0]
 
     print(f"Готово! FAQ в базе: {count}")
 

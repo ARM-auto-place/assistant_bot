@@ -3,3 +3,13 @@
 .idea/
 __pycache__/
 *.py[cod]
+# Local tests, static checks and package builds
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/

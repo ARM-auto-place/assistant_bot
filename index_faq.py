@@ -2,17 +2,14 @@ from pgvector.psycopg import register_vector
 from psycopg.rows import dict_row
 
 from db import get_connection
-from embeddings import embed_passages, VECTOR_SIZE
+from embeddings import VECTOR_SIZE, embed_passages
 
 
 def main():
     # Сначала читаем FAQ и закрываем подключение.
-    with get_connection() as connection:
-        with connection.cursor(row_factory=dict_row) as cursor:
-            cursor.execute(
-                "SELECT id, question, answer FROM faq ORDER BY id;"
-            )
-            faqs = cursor.fetchall()
+    with get_connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute("SELECT id, question, answer FROM faq ORDER BY id;")
+        faqs = cursor.fetchall()
 
     if not faqs:
         print("В базе нет FAQ. Сначала запусти seed_faq.py.")
@@ -50,20 +47,13 @@ def main():
         ],
     }
 
-    texts = [
-        "\n".join(
-            question_variants.get(faq["id"], [faq["question"]])
-        )
-        for faq in faqs
-    ]
+    texts = ["\n".join(question_variants.get(faq["id"], [faq["question"]])) for faq in faqs]
 
     print("Загружаем модель и вычисляем векторы...")
     vectors = embed_passages(texts)
 
     if vectors.shape != (len(faqs), VECTOR_SIZE):
-        raise ValueError(
-            f"Неожиданный размер векторов: {vectors.shape}"
-        )
+        raise ValueError(f"Неожиданный размер векторов: {vectors.shape}")
 
     # Записываем результаты одной транзакцией.
     with get_connection() as connection:

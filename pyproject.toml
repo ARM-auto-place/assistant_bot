@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=77,<85", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arm-auto-assistant"
+version = "0.2.0"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.5",
+    "pytest-cov==7.1.0",
+    "ruff==0.17.3",
+    "mypy==2.4.1",
+]
+embeddings = ["sentence-transformers"]
+
+[tool.setuptools]
+py-modules = [
+    "main", "deepseek_client", "db", "faq", "faq_repository", "embeddings",
+    "seed_faq", "index_faq", "check_search", "check_deepseek",
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements-core.txt"]}
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+explicit_package_bases = true
+exclude = ['(^|/)(\.venv|venv|build|dist)/']
+
+# Optional ML dependency and pgvector have no typing metadata in this setup.
+[[tool.mypy.overrides]]
+module = ["sentence_transformers", "sentence_transformers.*", "pgvector", "pgvector.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["main", "deepseek_client", "db", "faq", "faq_repository", "embeddings"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true

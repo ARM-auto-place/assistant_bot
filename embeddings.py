@@ -1,14 +1,14 @@
 from functools import lru_cache
 
-from sentence_transformers import SentenceTransformer
-
-
 MODEL_NAME = "intfloat/multilingual-e5-small"
 VECTOR_SIZE = 384
 
 
 @lru_cache(maxsize=1)
 def get_model():
+    # Vector search is optional; importing the API must not load ML libraries.
+    from sentence_transformers import SentenceTransformer
+
     return SentenceTransformer(
         MODEL_NAME,
         device="cpu",

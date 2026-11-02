@@ -43,11 +43,7 @@ def main():
         print(f"\nВопрос: {question}")
 
         for result in search(question):
-            print(
-                f"  {result['similarity']:.4f}"
-                f" | {result['id']}"
-                f" | {result['question']}"
-            )
+            print(f"  {result['similarity']:.4f} | {result['id']} | {result['question']}")
 
 
 if __name__ == "__main__":

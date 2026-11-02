@@ -46,3 +46,43 @@ DeepSeek получает все 15 FAQ из базы без истории пе
 При сбое DeepSeek используется точное совпадение с FAQ; иначе предлагается оператор.
 
 Ключ DeepSeek и настройки базы хранятся в локальном `.env`, который не включается в Git.
+
+
+## Установка и автоматические проверки
+
+Python 3.11 или новее. API и тесты устанавливаются без Torch и загрузки модели векторного поиска:
+
+```bash
+python -m venv .venv
+# Windows Git Bash:
+source .venv/Scripts/activate
+# Linux/macOS: source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+ruff check .
+ruff format --check .
+mypy .
+pytest -v --cov --cov-report=term-missing
+```
+
+GitHub Actions запускает тот же набор проверок на push и pull request в `master` и `develop`.
+Используется общий workflow `ARM-auto-place/arm-auto-place/.github/workflows/python-ci.yml@master`.
+Для закрытого репозитория общий workflow должен быть доступен этому репозиторию.
+
+Тесты проверяют HTTP `/chat`, JSON-RPC, валидацию ответов DeepSeek, резервные FAQ,
+сбои базы/LLM и параметры векторизации. HTTP DeepSeek, PostgreSQL и модель эмбеддингов
+заменены локальными подстановками; случайные реальные сетевые вызовы блокируются.
+Ключ API, запущенная БД и веса модели для этих тестов не нужны. Это проверки кода
+и контракта, а не оценка качества ответов настоящей модели или доступности базы.
+Минимальное покрытие основных модулей — 85%.
+
+Для запуска API достаточно `python -m pip install -e .`. Векторный поиск пока не участвует
+в обработке `/chat`; для `index_faq.py` и `check_search.py` дополнительно установите:
+
+```bash
+python -m pip install -e ".[embeddings]"
+```
+
+Существующая команда `python -m pip install -r requirements.txt` по-прежнему устанавливает
+полный набор, включая `sentence-transformers`. `requirements-core.txt` — зависимости API,
+а `requirements-dev.txt` устанавливает проект с набором `dev`.
