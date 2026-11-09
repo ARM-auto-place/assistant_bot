@@ -66,8 +66,7 @@ pytest -v --cov --cov-report=term-missing
 ```
 
 GitHub Actions запускает тот же набор проверок на push и pull request в `master` и `develop`.
-Используется общий workflow `ARM-auto-place/arm-auto-place/.github/workflows/python-ci.yml@master`.
-Для закрытого репозитория общий workflow должен быть доступен этому репозиторию.
+Проверки определены локально в `.github/workflows/ci.yml`.
 
 Тесты проверяют HTTP `/chat`, JSON-RPC, валидацию ответов DeepSeek, резервные FAQ,
 сбои базы/LLM и параметры векторизации. HTTP DeepSeek, PostgreSQL и модель эмбеддингов
@@ -86,3 +85,7 @@ python -m pip install -e ".[embeddings]"
 Существующая команда `python -m pip install -r requirements.txt` по-прежнему устанавливает
 полный набор, включая `sentence-transformers`. `requirements-core.txt` — зависимости API,
 а `requirements-dev.txt` устанавливает проект с набором `dev`.
+
+## CI/CD и Docker Compose
+
+Проверки, публикация Docker-образов и ручной деплой: [настройка CI/CD](docs/ci-cd.md).
