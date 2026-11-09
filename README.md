@@ -86,6 +86,6 @@ python -m pip install -e ".[embeddings]"
 полный набор, включая `sentence-transformers`. `requirements-core.txt` — зависимости API,
 а `requirements-dev.txt` устанавливает проект с набором `dev`.
 
-## CI/CD и Docker Compose
+## CI и релизы
 
-Проверки, публикация Docker-образов и автоматический деплой по тегу `v*`: [настройка CI/CD](docs/ci-cd.md).
+Проверки и публикация Docker-образов по тегу `v*`: [настройка CI и релизов](docs/ci-cd.md). Обновление сервера выполняется отдельно.
